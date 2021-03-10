@@ -136,29 +136,32 @@ export function watchTableOfContents(
       /* Build index to map anchor paths to vertical offsets */
       map(() => {
         let path: HTMLAnchorElement[] = []
-        return [...table].reduce((index, [anchor, target]) => {
-          while (path.length) {
-            const last = table.get(path[path.length - 1])!
-            if (last.tagName >= target.tagName) {
-              path.pop()
-            } else {
-              break
+        return new Map<HTMLAnchorElement[], number>(
+          [...[...table].reduce((index, [anchor, target]) => {
+            while (path.length) {
+              const last = table.get(path[path.length - 1])!
+              if (last.tagName >= target.tagName) {
+                path.pop()
+              } else {
+                break
+              }
             }
-          }
 
-          /* If the current anchor is hidden, continue with its parent */
-          let offset = target.offsetTop
-          while (!offset && target.parentElement) {
-            target = target.parentElement
-            offset = target.offsetTop
-          }
+            /* If the current anchor is hidden, continue with its parent */
+            let offset = target.offsetTop
+            while (!offset && target.parentElement) {
+              target = target.parentElement
+              offset = target.offsetTop
+            }
 
-          /* Map reversed anchor path to vertical offset */
-          return index.set(
-            [...path = [...path, anchor]].reverse(),
-            offset
-          )
-        }, new Map<HTMLAnchorElement[], number>())
+            /* Map reversed anchor path to vertical offset */
+            return index.set(
+              [...path = [...path, anchor]].reverse(),
+              offset
+            )
+          }, new Map<HTMLAnchorElement[], number>())]
+            .sort(([, offsetA], [, offsetB]) => offsetA - offsetB)
+        )
       }),
 
       /* Re-compute partition when viewport offset changes */
